@@ -27,7 +27,7 @@ PatternSelect gPatternSelect(&gDisplay);
 
 void setup() {
   Serial.begin(115200);
-  Serial << "Pyramid starting; Compiled " __DATE__ "  " __TIME__ << endl;
+  Serial << "RavePack starting; Compiled " __DATE__ "  " __TIME__ << endl;
 
   gPatternSelect.loadFromEepromAndAdvance();
 //  gPatternSelect.selectPattern(1);
@@ -54,7 +54,11 @@ void loop() {
 //    handleBrightControl();
 
     gPatternSelect.currentPattern().loop();
+
+//    gDisplay.raw().fill_solid(CRGB::White);
     gDisplay.show();
+
+    gPowerGovernor.measureFrame(gDisplay.raw());
   }
   gFpsGovernor.endFrame();
 }

@@ -14,10 +14,10 @@ class PatternSelect {
 public:
   enum {
     kPatternFire,
-    kPatternAudio1,
-    kPatternAudio3,
-    kPatternAudio2,
-    kPatternAudio4,
+//    kPatternAudio1,
+//    kPatternAudio3,
+//    kPatternAudio2,
+//    kPatternAudio4,
     kPattern_N
   };
 

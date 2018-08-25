@@ -3,3 +3,4 @@
 StatusLed gStatusLed;
 Display gDisplay;
 FpsGovernor gFpsGovernor;
+PowerGovernor gPowerGovernor;

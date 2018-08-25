@@ -33,6 +33,9 @@ inline void printRGB(const CRGB& rgb) {
 #define N_STRAND3 102
 #define N_ALL N_STRAND0 + N_STRAND1 + N_STRAND2 + N_STRAND3
 
+#define VOLTS 5
+#define MAX_MILLIAMPS 3500
+
 class Display {
 public:
   void begin() {
@@ -57,6 +60,8 @@ public:
           strands_[3], strands_[3].size());
       ctl.setCorrection(TypicalLEDStrip);
     }
+
+    FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, MAX_MILLIAMPS);
   }
 
   /**
@@ -76,7 +81,7 @@ public:
 //    }
 
     // black out bad pixel
-    leds_[0] = CRGB::Black;
+    strands_[1][0] = CRGB::Black;
     FastLED.show();
   }
 
@@ -161,6 +166,53 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+class PowerGovernor {
+  bool showPower_ = true;
+  int loopN_ = 0;
+
+  float mwSum = 0;
+  float mwMax = 0;
+
+public:
+  void measureFrame(CRGBSet leds) {
+    uint32_t frameMw = min(
+        calculate_unscaled_power_mW(leds, leds.size()),
+        (uint32_t) (VOLTS * MAX_MILLIAMPS));
+    mwSum += frameMw;
+    mwMax = max(mwMax, frameMw);
+
+    const int kPrintEvery = 1500;
+    loopN_++;
+    if ((loopN_ % kPrintEvery == 0) && showPower_) {
+      float mwAvg = mwSum / kPrintEvery;
+
+      Serial << "Average power usage: "
+             << mwAvg / VOLTS /1000 << " A; "
+             << mwAvg /1000 << " W; "
+             << (83600 * 0.75 / mwAvg) << " h runtime"
+             << "\n";
+      Serial << "   Peak power usage: "
+             << mwMax / VOLTS /1000 << " A; "
+             << mwMax /1000 << " W"
+             << "\n";
+
+      mwSum = 0;
+      mwMax = 0;
+    }
+  }
+
+  void setShowPower(bool showPower) {
+    showPower_ = showPower;
+  }
+  bool isShowPower() {
+    return showPower_;
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 extern StatusLed gStatusLed;
 extern Display gDisplay;
 extern FpsGovernor gFpsGovernor;
+extern PowerGovernor gPowerGovernor;

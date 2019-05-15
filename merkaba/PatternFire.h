@@ -61,6 +61,8 @@ private:
 //  static constexpr int HEIGHT = 15;
   int w_, h_;
 
+  static constexpr int N_CENTER = 7;
+
 public:
   // There are two main parameters you can play with to control the look and
   // feel of your fire: COOLING (used in step 1 above), and SPARKING (used
@@ -76,11 +78,13 @@ public:
   // Default 120, suggested range 50-200.
   int sparking = 150;
 
-  int sparkle = 40;
+  int sparkle = 30;
   int sparkleFade = 20;
 
   PatternFire(Display* d): BasePattern(d) {
-    w_ = 1; h_ = miniTetraBuf.data().size();
+//    w_ = 1; h_ = miniTetraBuf.data().size();
+    w_ = 1;
+    h_ = miniTetraBuf.data().size() + N_CENTER;
     heat.reset(new byte[w_ * h_]);
     mask.reset(new byte[display_->raw().size()]);
   }
@@ -99,6 +103,8 @@ public:
       // Change the target palette to a random one every 5 seconds.
       curPaletteId = (curPaletteId + 1) % (sizeof(palettes)/sizeof(palettes[0]));
       targetPalette = palettes[curPaletteId];
+
+      randomize();
     };
 
     gFftAnalyzer.step();
@@ -137,15 +143,14 @@ public:
       // Step 4.  Map from heat cells to LED colors
 
       CRGBSet edge = miniTetraBuf.data();
-      for (int y = 0; y < h_; y++) {
+      for (int y = 0; y < edge.size(); y++) {
 //        // Recommend that you use values 0-240 rather than
 //        // the usual 0-255, as the last 15 colors will be
 //        // 'wrapping around' from the hot end to the cold end,
 //        // which looks wrong.
-//        byte colorIndex = scale8(heat[XY(x,y)], 240);
-        byte colorIndex = heat[XY(x,y)];
+        byte colorIndex = scale8(heat[XY(x, y)], 240);
+//        byte colorIndex = heat[XY(x,h_ )];
 
-//        int i = (x >= N_FACES && x % 2) ? h_ - 1 - y : y;
         int i = y;
 //        int i = h_ - 1 - y;
 
@@ -160,11 +165,21 @@ public:
     }
 
     for (Segment& seg : gOctaSegments) {
+      for (int i = 0; i < N_CENTER; ++i) {
+        seg[i] = seg[N_PER_SEGMENT-1 - i] =
+            ColorFromPalette(currentPalette,
+                scale8(heat[XY(0, N_PER_SEGMENT + i)], 240));
+
+        // copy to middle led
+        if (i == N_CENTER - 1) {
+          seg[N_CENTER] = seg[i];
+        }
+      }
 //      seg.raw().fill_solid(ColorFromPalette(currentPalette,
 //          map(intensity, 0, 1, 50, 254)));
 
-      seg.raw().fill_solid(ColorFromPalette(currentPalette,
-                                            heat[XY(0,h_-2)]));
+//      seg.raw().fill_solid(ColorFromPalette(currentPalette,
+//                                            heat[XY(0,h_-2)]));
     }
     miniTetraBuf.apply(display_, miniTetras);
 
@@ -179,7 +194,7 @@ public:
     // sparkle mask
     for (int i = 0; i < raw.size(); ++i) {
       // fade to black
-      mask[i] = scale8(mask[i], 255-sparkleFade);
+      mask[i] = scale8(mask[i], 255 - sparkleFade);
 
       if (random8() < sparkle) {
         mask[i] = 255;
@@ -187,6 +202,17 @@ public:
 
       raw[i].nscale8(mask[i]);
     }
+
+    for (auto& led : raw) {
+      led.nscale8(map(intensity, 0,1, 40,255));
+    }
+  }
+
+  void randomize() {
+    sparkle = random(3, 60);
+    sparkleFade = random(5, 90);
+    Serial << "mask sparkle " << sparkle << endl;
+    Serial << "mask sparkleFade " << sparkleFade << endl;
   }
 
   virtual bool processSerial(const char *line) {
@@ -205,6 +231,12 @@ public:
     }
     if (sscanf(line, "m2 %d", &sparkleFade) == 1) {
       Serial << "mask sparkleFade " << sparkleFade << endl;
+      return true;
+    }
+
+    if (strcmp(line, "r") == 0) {
+      Serial << "randomize" << endl;
+      randomize();
       return true;
     }
     return false;

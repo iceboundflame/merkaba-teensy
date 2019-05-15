@@ -1,5 +1,10 @@
 #pragma once
 
+#include <vector>
+#define __ASSERT_USE_STDERR
+
+#include <assert.h>
+
 #include <Arduino.h>
 
 #include "Streaming.h"
@@ -62,14 +67,40 @@ public:
       : segmentIdx(segmentNum_-1), reverse(reverse_) {
   }
 
+  CRGBSet raw() {
+    return gDisplay.getRawSegment(segmentIdx);
+  }
+
   CRGB& operator[](int led) {
-    return rev(gDisplay.getRawSegment(segmentIdx), led, reverse);
+    return rev(raw(), led, reverse);
+  }
+
+  void copyFrom(CRGBSet& set) {
+    assert(set.size() == N_PER_SEGMENT);
+    for (int i = 0 ; i < N_PER_SEGMENT; ++i) {
+      operator[](i) = set[i];
+    }
   }
 };
 extern Segment gOctaSegments[12];
-//Segment tetraSegments[12] = {
-//    // all segments direction = coming forward or clockwise
-//
-//    // back legs, clockwise from lower left
-//    Segment(36, true),
-//};
+extern Segment gMiniTetraSegments[24];
+
+
+class MiniTetraLegsByHeightBuffer {
+  CRGB data_[N_PER_SEGMENT];
+
+public:
+  CRGBSet data() {  // top to bottom
+    return CRGBSet(data_, N_PER_SEGMENT);
+  }
+
+  // mini tetras in [0..7]: 0-3 = down tetra, 4-7 = up tetra
+  void apply(Display* display, std::vector<int>& miniTetras) {
+    CRGBSet x = data();
+    for (int miniTetra : miniTetras) {
+      for (int segment = 0; segment < 3; segment++) {
+        gMiniTetraSegments[miniTetra * 3 + segment].copyFrom(x);
+      }
+    }
+  }
+};

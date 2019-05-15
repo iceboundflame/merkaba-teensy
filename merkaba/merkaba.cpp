@@ -1,5 +1,10 @@
-
 #include "merkaba.h"
+
+
+#define __ASSERT_USE_STDERR
+
+#include <assert.h>
+
 
 #include <Arduino.h>
 #include <memory>
@@ -7,8 +12,8 @@
 #include "Display.h"
 #include "PatternSelect.h"
 
-//#include "AudioHardware.h"
-//#include "FftAnalyzer.h"
+#include "AudioHardware.h"
+#include "FftAnalyzer.h"
 
 
 namespace {
@@ -27,19 +32,18 @@ PatternSelect gPatternSelect(&gDisplay);
 
 void setup() {
   Serial.begin(115200);
-  Serial << "RavePack starting; Compiled " __DATE__ "  " __TIME__ << endl;
+  Serial << "Merkaba starting; Compiled " __DATE__ "  " __TIME__ << endl;
 
-  gPatternSelect.loadFromEepromAndAdvance();
-//  gPatternSelect.selectPattern(1);
+//  gPatternSelect.loadFromEepromAndAdvance();
+  gPatternSelect.selectPattern(0);
   Serial << "Starting with pattern: "
          << gPatternSelect.currentPatternIndex() << endl;
 
-  // NOTE: LED PIN IS USED FOR AUDIO SHIELD. DO NOT USE.
-//  gStatusLed.begin();
+  gStatusLed.begin();
   gDisplay.begin();
 
-//  audio_hardware_begin();
-//  gFftAnalyzer.begin();
+  audio_hardware_begin();
+  gFftAnalyzer.begin();
 //  gBeatDetector.begin();
 
 	// sanity check delay - allows reprogramming if accidently blowing power w/leds
@@ -61,6 +65,24 @@ void loop() {
     gPowerGovernor.measureFrame(gDisplay.raw());
   }
   gFpsGovernor.endFrame();
+}
+
+// handle diagnostic informations given by assertion and abort program execution:
+void __assert(const char *__func, const char *__file, int __lineno, const char *__sexp) {
+  // transmit diagnostic informations through serial link.
+  Serial.println(__func);
+  Serial.println(__file);
+  Serial.println(__lineno, DEC);
+  Serial.println(__sexp);
+  Serial.flush();
+
+  while (true) {
+    gStatusLed.blink();
+    delay(60);
+  }
+
+  // abort program execution.
+  abort();
 }
 
 namespace {
@@ -196,10 +218,20 @@ namespace {
 //      return gBeatDetector.processSerial(line + strlen(bd));
 //    }
 
-//    const char fft[] = "fft ";
-//    if (strncmp(line, fft, strlen(fft)) == 0) {
-//      return gFftAnalyzer.processSerial(line + strlen(fft));
-//    }
+    const char sound[] = "sound ";
+    if (strncmp(line, sound, strlen(sound)) == 0) {
+      int enable;
+      if (sscanf(line + strlen(sound), "%d", &enable)) {
+        set_sound_enable(enable);
+        Serial << "Sound enable: " << (enable != 0) << endl;
+      }
+      return true;
+    }
+
+    const char fft[] = "fft ";
+    if (strncmp(line, fft, strlen(fft)) == 0) {
+      return gFftAnalyzer.processSerial(line + strlen(fft));
+    }
 
     const char p[] = "p ";
     if (strncmp(line, p, strlen(p)) == 0) {

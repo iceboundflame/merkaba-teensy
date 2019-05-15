@@ -22,17 +22,18 @@ inline void printRGB(const CRGB& rgb) {
 ////////////////////////////////////////////////////////////////////////////////
 // Display
 
-#define DATA_STRAND0 1   // down tetrahedron
-#define DATA_STRAND1 10  // up tetrahedron
-#define DATA_STRAND2 8   // octahedron
-#define N_PER_STRAND 180
-#define N_ALL (N_PER_STRAND * 3)
-#define N_PER_SEGMENT 15
-#define N_SEGMENTS_PER_SHAPE 12
+constexpr int DATA_STRAND0 = 1;   // down tetrahedron
+constexpr int DATA_STRAND1 = 10;  // up tetrahedron
+constexpr int DATA_STRAND2 = 8;   // octahedron
+constexpr int N_PER_STRAND = 180;
+constexpr int N_ALL = (N_PER_STRAND * 3);
+constexpr int N_PER_SEGMENT = 15;
+constexpr int N_SEGMENTS_PER_SHAPE = 12;
 
-#define VOLTS 5
-#define MAX_MILLIAMPS 6000
-#define BATTERY_MILLIWATT_HOURS (216000 * 0.75)
+constexpr int VOLTS = 5;
+// divide by 2 since LEDs are double sided
+constexpr int MAX_MILLIAMPS = 10000 / 2;
+constexpr int BATTERY_MILLIWATT_HOURS = (216000 * 0.75);
 
 
 
@@ -68,7 +69,7 @@ public:
   }
 
   CRGBSet getRawSegment(int i) {
-    Serial << "Segment " << i << endl;
+//    Serial << "Segment " << i << endl;
     return CRGBSet(leds_ + i * N_PER_SEGMENT, N_PER_SEGMENT);
   }
 
@@ -86,7 +87,7 @@ public:
   void show() {
     // hacky gamma correction
     for (auto& rgb : raw()) {
-      rgb.nscale8_video(rgb);
+      rgb.nscale8(rgb);
     }
 //    raw().napplyGamma_video(2.2);
 
@@ -183,6 +184,9 @@ public:
     uint32_t frameMw = min(
         calculate_unscaled_power_mW(leds, leds.size()),
         (uint32_t) (VOLTS * MAX_MILLIAMPS));
+
+    frameMw *= 2;  // we have double-sided LEDs.
+
     mwSum += frameMw;
     mwMax = max(mwMax, frameMw);
 

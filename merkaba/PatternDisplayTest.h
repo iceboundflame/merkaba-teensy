@@ -1,5 +1,8 @@
 #pragma once
 
+#include <algorithm>
+#include <assert.h>
+
 #include "Display.h"
 #include "BasePattern.h"
 #include "DisplayBuffers.h"
@@ -10,9 +13,18 @@ public:
   int led_ = 0;
   int col_ = 0;
 
+  std::vector<int> tetras;
+
+  MiniTetraLegsByHeightBuffer miniTetraBuf;
+
   PatternDisplayTest(Display* display) : BasePattern(display) { }
 
   void loop() {
+    miniTetraBuf.data().fill_rainbow(0, 256/15);
+
+    miniTetraBuf.apply(display_, tetras);
+    return;
+
     CRGB colors[] = {
         CRGB::Red,
         CRGB::Orange,
@@ -28,7 +40,7 @@ public:
         CRGB::Green,
     };
 
-    display_->raw().fill_solid(colors[col_]);
+    display_->raw().fill_solid(CRGB::Black); //colors[col_]);
 
 //    if (seg_ == 36) {
     if (seg_ >= N_SEGMENTS_PER_SHAPE) {
@@ -49,6 +61,23 @@ public:
   }
 
   virtual bool processSerial(const char* line) {
+    {
+      int idx;
+      if (sscanf(line, "x%d", &idx) == 1) {
+        if (std::find(tetras.begin(), tetras.end(), idx) != tetras.end()) {
+          tetras.erase(std::remove(tetras.begin(), tetras.end(), idx),
+              tetras.end());
+
+          Serial << "Remove MiniTetra " << idx << endl;
+        } else {
+          tetras.push_back(idx);
+
+          Serial << "Add MiniTetra " << idx << endl;
+        }
+        return true;
+      }
+    }
+
     if (sscanf(line, "c%d", &col_) == 1) {
       Serial << "color " << col_ << endl;
       return true;

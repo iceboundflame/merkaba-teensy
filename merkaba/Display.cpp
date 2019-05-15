@@ -27,3 +27,27 @@ Segment gOctaSegments[12] = {
     Segment(30, false),
     Segment(34, true),
 };
+
+Segment gMiniTetraSegments[24] = {
+    // all segments direction = outside coming in.
+
+    // down tetra
+    // top front left (j)
+    Segment(4, false), Segment(6, false), Segment(3, true),
+    // top back (g)
+    Segment(5, true), Segment(12, false), Segment(11, true),
+    // top front right (h)
+    Segment(10, false), Segment(7, true), Segment(8, false),
+    // bottom (i)
+    Segment(2, false), Segment(1, true), Segment(9, true),
+
+    // up tetra
+    // bottom back left (l)
+    Segment(23, true), Segment(24, false), Segment(19, true),
+    // bottom back right (n)
+    Segment(14, false), Segment(13, true), Segment(16, false),
+    // bottom front (k)
+    Segment(17, true), Segment(20, false), Segment(18, false),
+    // top (m)
+    Segment(22, false), Segment(21, true), Segment(15, true),
+};

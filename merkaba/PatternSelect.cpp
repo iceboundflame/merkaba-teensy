@@ -2,7 +2,7 @@
 
 #include "BasePattern.h"
 //#include "./PatternFaceTest.h"
-//#include "./PatternDisplayTest.h"
+#include "./PatternDisplayTest.h"
 //#include "./PatternRadialSymTest.h"
 #include "./PatternFire.h"
 //#include "./PatternEdgesTest.h"
@@ -20,7 +20,7 @@ void PatternSelect::selectPattern(int i) {
 
   switch (i) {
     default:
-//    case kPatternDisplayTest: currentPattern_.reset(new PatternDisplayTest(display_)); break;
+    case kPatternDisplayTest: currentPattern_.reset(new PatternDisplayTest(display_)); break;
 //    case kPatternFaceTest: currentPattern_.reset(new PatternFaceTest(display_)); break;
 //    case kPatternRadialSymTest: currentPattern_.reset(new PatternRadialSymTest(display_)); break;
     case kPatternFire: currentPattern_.reset(new PatternFire(display_)); break;

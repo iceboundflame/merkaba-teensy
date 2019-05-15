@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-//#include <WS2812Serial.h>
-//#define USE_WS2812SERIAL
+#include <WS2812Serial.h>
+#define USE_WS2812SERIAL
 #include <FastLED.h>
 
 #include "Streaming.h"
@@ -22,42 +22,37 @@ inline void printRGB(const CRGB& rgb) {
 ////////////////////////////////////////////////////////////////////////////////
 // Display
 
-#define DATA_STRAND0 5   // strap
-#define DATA_STRAND1 6   // strap
-#define DATA_STRAND2 21  // back
-#define DATA_STRAND3 8   // top/sides
-
-#define N_STRAND0 60
-#define N_STRAND1 60
-#define N_STRAND2 41
-#define N_STRAND3 102
-#define N_ALL N_STRAND0 + N_STRAND1 + N_STRAND2 + N_STRAND3
+#define DATA_STRAND0 1   // down tetrahedron
+#define DATA_STRAND1 10  // up tetrahedron
+#define DATA_STRAND2 8   // octahedron
+#define N_PER_STRAND 180
+#define N_ALL (N_PER_STRAND * 3)
+#define N_PER_SEGMENT 15
+#define N_SEGMENTS_PER_SHAPE 12
 
 #define VOLTS 5
-#define MAX_MILLIAMPS 3500
+#define MAX_MILLIAMPS 6000
+#define BATTERY_MILLIWATT_HOURS (216000 * 0.75)
+
+
 
 class Display {
 public:
   void begin() {
     // WS2812SERIAL?
     {
-      auto &ctl = FastLED.addLeds<WS2812B, DATA_STRAND0, GRB>(
-          strands_[0], strands_[0].size());
+      auto &ctl = FastLED.addLeds<WS2812SERIAL, DATA_STRAND0, BRG>(
+          getStrand(0), N_PER_STRAND);
       ctl.setCorrection(TypicalLEDStrip);
     }
     {
-      auto &ctl = FastLED.addLeds<WS2812B, DATA_STRAND1, GRB>(
-          strands_[1], strands_[1].size());
+      auto &ctl = FastLED.addLeds<WS2812SERIAL, DATA_STRAND1, BRG>(
+          getStrand(1), N_PER_STRAND);
       ctl.setCorrection(TypicalLEDStrip);
     }
     {
-      auto &ctl = FastLED.addLeds<WS2812B, DATA_STRAND2, GRB>(
-          strands_[2], strands_[2].size());
-      ctl.setCorrection(TypicalLEDStrip);
-    }
-    {
-      auto &ctl = FastLED.addLeds<WS2812B, DATA_STRAND3, GRB>(
-          strands_[3], strands_[3].size());
+      auto &ctl = FastLED.addLeds<WS2812SERIAL, DATA_STRAND2, BRG>(
+          getStrand(2), N_PER_STRAND);
       ctl.setCorrection(TypicalLEDStrip);
     }
 
@@ -68,33 +63,43 @@ public:
    * Each face has two vertical legs, then the base leg.
    * Pixel order starts from bottom of right leg, CCW.
    */
-  CRGBSet& getStrand(int i) {
-    return strands_[i];
+  CRGBSet getStrand(int i) {
+    return CRGBSet(leds_ + i * N_PER_STRAND, N_PER_STRAND);
   }
+
+  CRGBSet getRawSegment(int i) {
+    Serial << "Segment " << i << endl;
+    return CRGBSet(leds_ + i * N_PER_SEGMENT, N_PER_SEGMENT);
+  }
+
+//  CRGBSet getTetrahedral(int i) {
+//
+//    return getSegment()
+//  }
+
+//  CRGBSet getOctahedral(int i) {
+//    return getSegment(gOctaSegments[i].segmentIdx);
+//  }
 
   CRGBSet raw() { return CRGBSet(leds_, N_ALL); }
 
   void show() {
-//    // hacky gamma correction
-//    for (auto& rgb : raw()) {
-//      rgb.nscale8_video(rgb);
-//    }
+    // hacky gamma correction
+    for (auto& rgb : raw()) {
+      rgb.nscale8_video(rgb);
+    }
+//    raw().napplyGamma_video(2.2);
 
-    // black out bad pixel
-    strands_[1][0] = CRGB::Black;
     FastLED.show();
   }
 
 private:
 
   CRGB leds_[N_ALL];
-  CRGBSet strands_[4] = {
-      CRGBSet(leds_, N_STRAND0),
-      CRGBSet(leds_ + N_STRAND0, N_STRAND1),
-      CRGBSet(leds_ + N_STRAND0 + N_STRAND1, N_STRAND2),
-      CRGBSet(leds_ + N_STRAND0 + N_STRAND1 + N_STRAND2, N_STRAND3)
-  };
 };
+
+
+//////////
 
 
 constexpr int LED_PIN = 13;
@@ -189,7 +194,7 @@ public:
       Serial << "Average power usage: "
              << mwAvg / VOLTS /1000 << " A; "
              << mwAvg /1000 << " W; "
-             << (83600 * 0.75 / mwAvg) << " h runtime"
+             << (BATTERY_MILLIWATT_HOURS / mwAvg) << " h runtime"
              << "\n";
       Serial << "   Peak power usage: "
              << mwMax / VOLTS /1000 << " A; "

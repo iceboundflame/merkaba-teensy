@@ -5,6 +5,7 @@
 #include "./PatternDisplayTest.h"
 //#include "./PatternRadialSymTest.h"
 #include "./PatternFire.h"
+#include "./PatternLines.h"
 //#include "./PatternEdgesTest.h"
 //#include "./PatternAudio1.h"
 //#include "./PatternAudio2.h"
@@ -20,10 +21,16 @@ void PatternSelect::selectPattern(int i) {
 
   switch (i) {
     default:
-    case kPatternDisplayTest: currentPattern_.reset(new PatternDisplayTest(display_)); break;
-//    case kPatternFaceTest: currentPattern_.reset(new PatternFaceTest(display_)); break;
-//    case kPatternRadialSymTest: currentPattern_.reset(new PatternRadialSymTest(display_)); break;
+    case kPatternDisplayTest:
+      currentPattern_.reset(new PatternDisplayTest(display_));
+      break;
+
+    case kPatternLines:
+      currentPattern_.reset(new PatternLines(display_));
+      break;
+
     case kPatternFire: currentPattern_.reset(new PatternFire(display_)); break;
+
 //    case kPatternEdgesTest: currentPattern_.reset(new PatternEdgesTest(display_)); break;
 //    case kPatternAudio1: currentPattern_.reset(new PatternAudio1(display_)); break;
 //    case kPatternAudio2: currentPattern_.reset(new PatternAudio2(display_)); break;

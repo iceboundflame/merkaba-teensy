@@ -82,8 +82,9 @@ public:
     }
   }
 };
-extern Segment gOctaSegments[12];
-extern Segment gMiniTetraSegments[24];
+extern Segment gAllSegments[];
+extern Segment* const  gOctaSegments;
+extern Segment* const  gMiniTetraSegments;
 
 
 class MiniTetraLegsByHeightBuffer {

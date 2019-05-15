@@ -6,7 +6,10 @@ Display gDisplay;
 FpsGovernor gFpsGovernor;
 PowerGovernor gPowerGovernor;
 
-Segment gOctaSegments[12] = {
+
+Segment gAllSegments[36] = {
+    // ===================
+    // OCTA SEGMENTS
     // all segments direction = coming forward or clockwise
 
     // back legs, clockwise from lower left
@@ -26,9 +29,9 @@ Segment gOctaSegments[12] = {
     Segment(31, true),
     Segment(30, false),
     Segment(34, true),
-};
 
-Segment gMiniTetraSegments[24] = {
+    // ===================
+    // MINI TETRA SEGMENTS
     // all segments direction = outside coming in.
 
     // down tetra
@@ -51,3 +54,7 @@ Segment gMiniTetraSegments[24] = {
     // top (m)
     Segment(22, false), Segment(21, true), Segment(15, true),
 };
+
+Segment* const gOctaSegments = gAllSegments;
+
+Segment* const gMiniTetraSegments = gAllSegments + 12;

@@ -29,6 +29,7 @@ constexpr int N_PER_STRAND = 180;
 constexpr int N_ALL = (N_PER_STRAND * 3);
 constexpr int N_PER_SEGMENT = 15;
 constexpr int N_SEGMENTS_PER_SHAPE = 12;
+constexpr int N_SEGMENTS_TOTAL = 36;
 
 constexpr int VOLTS = 5;
 // divide by 2 since LEDs are double sided

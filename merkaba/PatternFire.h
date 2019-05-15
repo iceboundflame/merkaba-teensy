@@ -164,7 +164,8 @@ public:
       }
     }
 
-    for (Segment& seg : gOctaSegments) {
+    for (int i = 0; i < 12; i++) {
+      auto& seg = gOctaSegments[i];
       for (int i = 0; i < N_CENTER; ++i) {
         seg[i] = seg[N_PER_SEGMENT-1 - i] =
             ColorFromPalette(currentPalette,
@@ -209,8 +210,8 @@ public:
   }
 
   void randomize() {
-    sparkle = random(3, 60);
-    sparkleFade = random(5, 90);
+    sparkle = random(3, 120);
+    sparkleFade = random(5, 50);
     Serial << "mask sparkle " << sparkle << endl;
     Serial << "mask sparkleFade " << sparkleFade << endl;
   }

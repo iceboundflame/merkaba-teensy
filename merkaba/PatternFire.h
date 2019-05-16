@@ -24,11 +24,12 @@ private:
   CRGBPalette16 currentPalette;
   CRGBPalette16 targetPalette = bhw1_03_gp;
 
-  int curPaletteId = 0;
+//  int curPaletteId = 0;
 
-//  static constexpr int HEIGHT = 15;
   int w_, h_;
 
+  // generate flames for one tetra leg + half a tetra base
+  // these are mirrored to all tetras.
   static constexpr int N_CENTER = 7;
 
 public:
@@ -50,7 +51,6 @@ public:
   int sparkleFade = 20;
 
   PatternFire(Display* d): BasePattern(d) {
-//    w_ = 1; h_ = miniTetraBuf.data().size();
     w_ = 1;
     h_ = miniTetraBuf.data().size() + N_CENTER;
     heat.reset(new byte[w_ * h_]);
@@ -70,9 +70,10 @@ public:
 
   virtual void loop() {
     nblendPaletteTowardPalette(currentPalette, targetPalette, 48);
+
     EVERY_N_SECONDS(5) {
-//      nextPalette();
-//      randomize();
+      nextPalette();
+      randomize();
     };
 
     gFftAnalyzer.step();
@@ -112,60 +113,38 @@ public:
 
       CRGBSet edge = miniTetraBuf.data();
       for (int y = 0; y < edge.size(); y++) {
-//        // Recommend that you use values 0-240 rather than
-//        // the usual 0-255, as the last 15 colors will be
-//        // 'wrapping around' from the hot end to the cold end,
-//        // which looks wrong.
+        // Recommend that you use values 0-240 rather than
+        // the usual 0-255, as the last 15 colors will be
+        // 'wrapping around' from the hot end to the cold end,
+        // which looks wrong.
+        // See: https://github.com/FastLED/FastLED/issues/515
         byte colorIndex = scale8(heat[XY(x, y)], 240);
-// wait.. our palettes don't wrap, they're defined 0-255
 
-//        byte colorIndex = heat[XY(x, y)];
-
-        int i = y;
-//        int i = h_ - 1 - y;
-
-        if (y <= edge.size()) {
-//          edge[i] = ColorFromPalette(currentPalette, colorIndex);
-//          edge[i] = ColorFromPalette(currentPalette, 254);
-
-          // override color 0 to ensure a black background?
-          edge[i] = (colorIndex == 0)
-                    ? CRGB::Black
-                    : ColorFromPalette(currentPalette, colorIndex);
-        }
+        edge[y] = ColorFromPalette(currentPalette, colorIndex);
+//        // override color 0 to ensure a black background?
+//        edge[y] = (colorIndex == 0)
+//                  ? CRGB::Black
+//                  : ColorFromPalette(currentPalette, colorIndex);
       }
     }
-
-    Serial << ColorFromPalette
 
     for (int i = 0; i < 12; i++) {
       auto& seg = gOctaSegments[i];
       for (int i = 0; i < N_CENTER; ++i) {
         seg[i] = seg[N_PER_SEGMENT-1 - i] =
             ColorFromPalette(currentPalette,
-                             heat[XY(0, N_PER_SEGMENT + i)]);
-//                scale8(heat[XY(0, N_PER_SEGMENT + i)], 240));
+//                             heat[XY(0, N_PER_SEGMENT + i)]);
+                             scale8(heat[XY(0, N_PER_SEGMENT + i)], 240));
 
         // copy to middle led
         if (i == N_CENTER - 1) {
           seg[N_CENTER] = seg[i];
         }
       }
-//      seg.raw().fill_solid(ColorFromPalette(currentPalette,
-//          map(intensity, 0, 1, 50, 254)));
-
-//      seg.raw().fill_solid(ColorFromPalette(currentPalette,
-//                                            heat[XY(0,h_-2)]));
     }
     miniTetraBuf.apply(display_, miniTetras);
 
-
     auto raw = display_->raw();
-
-//    float intensity = 0.7;
-//    float intensity = 1;
-//    raw.nscale8(intensity * 255);
-//    buf_.apply(display_);
 
     // sparkle mask
     for (int i = 0; i < raw.size(); ++i) {
@@ -179,9 +158,8 @@ public:
       raw[i].nscale8(mask[i]);
     }
 
-    for (auto& led : raw) {
-      led.nscale8(map(intensity, 0,1, 40,255));
-    }
+    // intensity global brightness mask
+    raw.nscale8(map(intensity, 0,1, 40,255));
   }
 
   void nextPalette() {
@@ -228,6 +206,15 @@ public:
       randomize();
       return true;
     }
+
+
+    // dump palette
+    for (int i = 0; i < 256; ++i) {
+      Serial << i << " ";
+      printRGB(ColorFromPalette(currentPalette, i));
+      Serial << endl;
+    }
+
     return false;
   }
 };

@@ -1,3 +1,9 @@
+
+// NOTES:
+// To use Serial3 (pin 8 data for WS2812SERIAL), must compile with 120MHz
+// overclock and latest version of Arduino/Teensyduino.
+
+
 #include "merkaba.h"
 
 
@@ -33,6 +39,12 @@ PatternSelect gPatternSelect(&gDisplay);
 void setup() {
   Serial.begin(115200);
   Serial << "Merkaba starting; Compiled " __DATE__ "  " __TIME__ << endl;
+
+//  delay(1000);
+//  int x = analogRead(A1);
+//  Serial << "Seed " << x << endl;
+//  randomSeed(x);
+//  delay(1000);
 
 //  gPatternSelect.loadFromEepromAndAdvance();
   gPatternSelect.selectPattern(0);

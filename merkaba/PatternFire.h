@@ -5,41 +5,9 @@
 #include "Display.h"
 #include "DisplayBuffers.h"
 #include "BasePattern.h"
+#include "Palettes.h"
 
 #include "AudioHardware.h"
-
-DEFINE_GRADIENT_PALETTE( fire_gp ) {
-    0x00,     0,  0,  0,   //black
-    0x55,   255,  0,  0,   //red
-    0xAA,   255,255,  0,   //bright yellow
-    0xFF,   255,255,255 }; //full white
-
-// Gradient palette "bhw1_03_gp", originally from
-// http://soliton.vm.bytemark.co.uk/pub/cpt-city/bhw/bhw1/tn/bhw1_03.png.index.html
-// converted for FastLED with gammas (2.6, 2.2, 2.5)
-// Size: 16 bytes of program space.
-DEFINE_GRADIENT_PALETTE( bhw1_03_gp ) {
-    0,   0,  0,  0,
-    0x55,  0x00,0x20,0x90,
-    0xAA,  40,219,105,
-    0xFF, 255,255,255};
-
-// Gradient palette "es_emerald_dragon_11_gp", originally from
-// http://soliton.vm.bytemark.co.uk/pub/cpt-city/es/emerald_dragon/tn/es_emerald_dragon_11.png.index.html
-// converted for FastLED with gammas (2.6, 2.2, 2.5)
-// Size: 16 bytes of program space.
-DEFINE_GRADIENT_PALETTE( es_emerald_dragon_11_gp ) {
-    0,   1,  8,  1,
-    170,  78,156,  2,
-    220, 197,250, 78,
-    255, 229,244,192};
-
-static CRGBPalette16 palettes[] = {
-    fire_gp,
-//    CRGBPalette16( CRGB::Black, CRGB::Blue, CRGB::Aqua,  CRGB::White),
-    bhw1_03_gp,
-    es_emerald_dragon_11_gp,
-};
 
 class PatternFire : public BasePattern {
 private:
@@ -87,6 +55,9 @@ public:
     h_ = miniTetraBuf.data().size() + N_CENTER;
     heat.reset(new byte[w_ * h_]);
     mask.reset(new byte[display_->raw().size()]);
+
+    nextPalette();
+    randomize();
   }
 
   int XY(int x, int y) {
@@ -100,11 +71,8 @@ public:
   virtual void loop() {
     nblendPaletteTowardPalette(currentPalette, targetPalette, 48);
     EVERY_N_SECONDS(5) {
-      // Change the target palette to a random one every 5 seconds.
-      curPaletteId = (curPaletteId + 1) % (sizeof(palettes)/sizeof(palettes[0]));
-      targetPalette = palettes[curPaletteId];
-
-      randomize();
+//      nextPalette();
+//      randomize();
     };
 
     gFftAnalyzer.step();
@@ -149,27 +117,34 @@ public:
 //        // 'wrapping around' from the hot end to the cold end,
 //        // which looks wrong.
         byte colorIndex = scale8(heat[XY(x, y)], 240);
-//        byte colorIndex = heat[XY(x,h_ )];
+// wait.. our palettes don't wrap, they're defined 0-255
+
+//        byte colorIndex = heat[XY(x, y)];
 
         int i = y;
 //        int i = h_ - 1 - y;
 
-        // override color 0 to ensure a black background?
         if (y <= edge.size()) {
+//          edge[i] = ColorFromPalette(currentPalette, colorIndex);
+//          edge[i] = ColorFromPalette(currentPalette, 254);
+
+          // override color 0 to ensure a black background?
           edge[i] = (colorIndex == 0)
                     ? CRGB::Black
                     : ColorFromPalette(currentPalette, colorIndex);
-//        : ColorFromPalette(HeatColors_p, colorIndex);
         }
       }
     }
+
+    Serial << ColorFromPalette
 
     for (int i = 0; i < 12; i++) {
       auto& seg = gOctaSegments[i];
       for (int i = 0; i < N_CENTER; ++i) {
         seg[i] = seg[N_PER_SEGMENT-1 - i] =
             ColorFromPalette(currentPalette,
-                scale8(heat[XY(0, N_PER_SEGMENT + i)], 240));
+                             heat[XY(0, N_PER_SEGMENT + i)]);
+//                scale8(heat[XY(0, N_PER_SEGMENT + i)], 240));
 
         // copy to middle led
         if (i == N_CENTER - 1) {
@@ -209,6 +184,12 @@ public:
     }
   }
 
+  void nextPalette() {
+//    curPaletteId = (curPaletteId + 1) % gNumPalettes;
+//    targetPalette = gPalettes[curPaletteId];
+    targetPalette = gPalettes[random(0, gNumPalettes)];
+  }
+
   void randomize() {
     sparkle = random(3, 120);
     sparkleFade = random(5, 50);
@@ -232,6 +213,13 @@ public:
     }
     if (sscanf(line, "m2 %d", &sparkleFade) == 1) {
       Serial << "mask sparkleFade " << sparkleFade << endl;
+      return true;
+    }
+
+    int targetPaletteId;
+    if (sscanf(line, "p %d", &targetPaletteId) == 1) {
+      Serial << "palette " << targetPaletteId << endl;
+      targetPalette = gPalettes[targetPaletteId];
       return true;
     }
 

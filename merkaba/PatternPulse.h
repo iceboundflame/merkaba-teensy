@@ -9,7 +9,7 @@
 
 #include "AudioHardware.h"
 
-class PatternLines : public BasePattern {
+class PatternPulse : public BasePattern {
 private:
   CRGBPalette16 currentPalette;
   CRGBPalette16 targetPalette = bhw1_03_gp;
@@ -24,7 +24,7 @@ private:
 
 public:
 
-  PatternLines(Display* d): BasePattern(d) {
+  PatternPulse(Display* d): BasePattern(d) {
     randomize();
   }
 

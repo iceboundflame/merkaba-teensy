@@ -13,8 +13,9 @@ const int EEPROM_PATTERN_ADDR = 0x7FF;
 class PatternSelect {
 public:
   enum {
-    kPatternLines,
     kPatternFire,
+    kPatternPulse,
+    kPatternLines,
 //    kPatternAudio1,
 //    kPatternAudio3,
 //    kPatternAudio2,

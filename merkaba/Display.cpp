@@ -58,3 +58,24 @@ Segment gAllSegments[36] = {
 Segment* const gOctaSegments = gAllSegments;
 
 Segment* const gMiniTetraSegments = gAllSegments + 12;
+
+void Display::begin() {
+  // WS2812SERIAL?
+  {
+    auto &ctl = FastLED.addLeds<WS2812SERIAL, DATA_STRAND0, BRG>(
+        getStrand(0), N_PER_STRAND);
+    ctl.setCorrection(TypicalLEDStrip);
+  }
+  {
+    auto &ctl = FastLED.addLeds<WS2812SERIAL, DATA_STRAND1, BRG>(
+        getStrand(1), N_PER_STRAND);
+    ctl.setCorrection(TypicalLEDStrip);
+  }
+  {
+    auto &ctl = FastLED.addLeds<WS2812SERIAL, DATA_STRAND2, BRG>(
+        getStrand(2), N_PER_STRAND);
+    ctl.setCorrection(TypicalLEDStrip);
+  }
+
+  FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, MAX_MILLIAMPS);
+}

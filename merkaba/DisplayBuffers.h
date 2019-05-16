@@ -86,6 +86,7 @@ extern Segment gAllSegments[];
 extern Segment* const  gOctaSegments;
 extern Segment* const  gMiniTetraSegments;
 
+extern std::vector<std::vector<Segment>> gOrbits;
 
 class MiniTetraLegsByHeightBuffer {
   CRGB data_[N_PER_SEGMENT];

@@ -17,6 +17,7 @@
 
 #include "Display.h"
 #include "PatternSelect.h"
+#include "PaletteManager.h"
 
 #include "AudioHardware.h"
 #include "FftAnalyzer.h"
@@ -69,32 +70,18 @@ void loop() {
 
 //    handleBrightControl();
 
+    gPaletteManager.loop();
     gPatternSelect.currentPattern().loop();
 
-//    gDisplay.raw().fill_solid(CRGB::White);
+    EVERY_N_MILLISECONDS(250) {
+      gStatusLed.blink();
+    }
+
     gDisplay.show();
 
     gPowerGovernor.measureFrame(gDisplay.raw());
   }
   gFpsGovernor.endFrame();
-}
-
-// handle diagnostic informations given by assertion and abort program execution:
-void __assert(const char *__func, const char *__file, int __lineno, const char *__sexp) {
-  // transmit diagnostic informations through serial link.
-  Serial.println(__func);
-  Serial.println(__file);
-  Serial.println(__lineno, DEC);
-  Serial.println(__sexp);
-  Serial.flush();
-
-  while (true) {
-    gStatusLed.blink();
-    delay(60);
-  }
-
-  // abort program execution.
-  abort();
 }
 
 namespace {
@@ -230,37 +217,47 @@ namespace {
 //      return gBeatDetector.processSerial(line + strlen(bd));
 //    }
 
-    const char sound[] = "sound ";
-    if (strncmp(line, sound, strlen(sound)) == 0) {
-      int enable;
-      if (sscanf(line + strlen(sound), "%d", &enable)) {
-        set_sound_enable(enable);
-        Serial << "Sound enable: " << (enable != 0) << endl;
+    {
+      const char sound[] = "sound ";
+      if (strncmp(line, sound, strlen(sound)) == 0) {
+        int enable;
+        if (sscanf(line + strlen(sound), "%d", &enable)) {
+          set_sound_enable(enable);
+          Serial << "Sound enable: " << (enable != 0) << endl;
+        }
+        return true;
       }
-      return true;
     }
 
-    const char fft[] = "fft ";
-    if (strncmp(line, fft, strlen(fft)) == 0) {
-      return gFftAnalyzer.processSerial(line + strlen(fft));
+    {
+      const char fft[] = "fft ";
+      if (strncmp(line, fft, strlen(fft)) == 0) {
+        return gFftAnalyzer.processSerial(line + strlen(fft));
+      }
     }
 
-    const char p[] = "p ";
-    if (strncmp(line, p, strlen(p)) == 0) {
-      return gPatternSelect.currentPattern().processSerial(line + strlen(p));
+    {
+      const char c[] = "c ";
+      if (strncmp(line, c, strlen(c)) == 0) {
+        return gPaletteManager.processSerial(line + strlen(c));
+      }
     }
 
-    if (strcmp(line, "n") == 0 || strcmp(line, "p") == 0) {
-      gPatternSelect.cyclePattern(line[0] == 'n' ? 1 : -1);
-      Serial << "Switch to effect " << gPatternSelect.currentPatternIndex() << endl;
-      return true;
+    {
+      if (strcmp(line, "n") == 0 || strcmp(line, "p") == 0) {
+        gPatternSelect.cyclePattern(line[0] == 'n' ? 1 : -1);
+        Serial << "Switch to effect " << gPatternSelect.currentPatternIndex()
+               << endl;
+        return true;
+      }
     }
 
-//    if (strcmp(line, "p") == 0) {
-//      gEffects.CyclePalette();
-//      Serial << "Switch palette" << endl;
-//      return true;
-//    }
+    {
+      const char p[] = "p ";
+      if (strncmp(line, p, strlen(p)) == 0) {
+        return gPatternSelect.currentPattern().processSerial(line + strlen(p));
+      }
+    }
 
     if (strcmp(line, "fps") == 0) {
       gFpsGovernor.setShowFps(!gFpsGovernor.isShowFps());
@@ -269,5 +266,35 @@ namespace {
 
     // fallback: send to current pattern
     return gPatternSelect.currentPattern().processSerial(line);
+  }
+}
+
+
+
+
+// misc utils
+
+// handle diagnostic informations given by assertion and abort program execution:
+void __assert(const char *__func, const char *__file, int __lineno, const char *__sexp) {
+  // transmit diagnostic informations through serial link.
+  Serial.println(__func);
+  Serial.println(__file);
+  Serial.println(__lineno, DEC);
+  Serial.println(__sexp);
+  Serial.flush();
+
+  // abort program execution.
+  abort();
+}
+
+// not sure why needed: https://forum.pjrc.com/threads/49802-STL-and-undefined-reference-to-std-__throw_bad_alloc()
+namespace std {
+  void __throw_bad_alloc() {
+    Serial.println("Unable to allocate memory");
+    abort();
+  }
+  void __throw_length_error( char const*e ) {
+    Serial.print("Length Error :"); Serial.println(e);
+    abort();
   }
 }

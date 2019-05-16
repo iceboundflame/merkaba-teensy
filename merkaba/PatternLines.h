@@ -5,17 +5,12 @@
 #include "Display.h"
 #include "DisplayBuffers.h"
 #include "BasePattern.h"
-#include "Palettes.h"
+#include "PaletteManager.h"
 
 #include "AudioHardware.h"
 
 class PatternLines : public BasePattern {
 private:
-  CRGBPalette16 currentPalette;
-  CRGBPalette16 targetPalette = bhw1_03_gp;
-
-  int curPaletteId = 0;
-
   int sparkle = 30;
   int sparkleFade = 20;
   int numSubsegs = 2;
@@ -23,15 +18,13 @@ private:
   int vals[N_SEGMENTS_TOTAL][N_PER_SEGMENT];
 
 public:
-
   PatternLines(Display* d): BasePattern(d) {
     randomize();
   }
 
   virtual void loop() {
-    nblendPaletteTowardPalette(currentPalette, targetPalette, 48);
     EVERY_N_SECONDS(5) {
-      nextPalette();
+      gPaletteManager.nextPalette();
       randomize();
     };
 
@@ -68,8 +61,7 @@ public:
     for (int i = 0; i < N_SEGMENTS_TOTAL; ++i) {
       Segment seg = gAllSegments[i];
       for (int j = 0; j < N_PER_SEGMENT; ++j) {
-        seg[j] = ColorFromPalette(currentPalette,
-            scale8(vals[i][j], 240));
+        seg[j] = gPaletteManager.colorNoWrap(vals[i][j]);
 
         // fade to black
         vals[i][j] = scale8(vals[i][j], 255 - sparkleFade);
@@ -79,12 +71,6 @@ public:
     for (auto& led : raw) {
       led.nscale8(map(intensity, 0,1, 40,255));
     }
-  }
-
-  void nextPalette() {
-//    curPaletteId = (curPaletteId + 1) % gNumPalettes;
-//    targetPalette = gPalettes[curPaletteId];
-    targetPalette = gPalettes[random(0, gNumPalettes)];
   }
 
   void randomize() {

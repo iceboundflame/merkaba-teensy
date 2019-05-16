@@ -1,4 +1,4 @@
-#pragma once
+#include "PaletteManager.h"
 
 #include <FastLED.h>
 
@@ -106,7 +106,8 @@ DEFINE_GRADIENT_PALETTE( bhw1_sunset1_gp ) {
     178,  88,136,203,
     255,   3, 24, 78};
 
-static CRGBPalette16 gPalettes[] = {
+
+CRGBPalette16 gPalettes[] = {
     fire_gp,
 
     bhw1_03_gp,
@@ -122,4 +123,6 @@ static CRGBPalette16 gPalettes[] = {
     bhw1_purplered_gp,
     bhw1_sunset1_gp,
 };
-static constexpr int gNumPalettes = sizeof(gPalettes) / sizeof(gPalettes[0]);
+int gNumPalettes = sizeof(gPalettes) / sizeof(gPalettes[0]);
+
+PaletteManager gPaletteManager;

@@ -54,16 +54,8 @@ public:
 //        gMiniTetraSegments[N_SEGMENTS_PER_SHAPE + i].raw().fill_solid(CRGB::White);
 //      }
 //    }
-
-// todo: orbit around squares, big tetra tris, etc.
-// todo: kaleidoscope effects?
-// todo: auto-advance and randomize effects.
-// todo: see if gain control is needed.
-//    for (int i = 0; i < 2; i++) {
-//      for (int )
-//      gOrbits[i]
-//    }
-    raw.nscale8(245);
+//
+//    raw.nscale8(245);
   }
 
   void randomize() {

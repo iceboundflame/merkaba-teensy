@@ -5,6 +5,7 @@
 #include "Streaming.h"
 
 #include "FftAnalyzer.h"
+#include "BeatDetector.h"
 
 extern AudioInputAnalog gAudioInput;
 

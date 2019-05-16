@@ -5,7 +5,7 @@
 #include "Display.h"
 #include "DisplayBuffers.h"
 #include "BasePattern.h"
-#include "Palettes.h"
+#include "PaletteManager.h"
 
 #include "AudioHardware.h"
 
@@ -20,11 +20,6 @@ private:
   std::vector<int> miniTetras = {0,1,2,3,4,5,6,7};
 
   MiniTetraLegsByHeightBuffer miniTetraBuf;
-
-  CRGBPalette16 currentPalette;
-  CRGBPalette16 targetPalette = bhw1_03_gp;
-
-//  int curPaletteId = 0;
 
   int w_, h_;
 
@@ -56,7 +51,6 @@ public:
     heat.reset(new byte[w_ * h_]);
     mask.reset(new byte[display_->raw().size()]);
 
-    nextPalette();
     randomize();
   }
 
@@ -69,10 +63,8 @@ public:
   }
 
   virtual void loop() {
-    nblendPaletteTowardPalette(currentPalette, targetPalette, 48);
-
     EVERY_N_SECONDS(5) {
-      nextPalette();
+      gPaletteManager.nextPalette();
       randomize();
     };
 
@@ -113,18 +105,7 @@ public:
 
       CRGBSet edge = miniTetraBuf.data();
       for (int y = 0; y < edge.size(); y++) {
-        // Recommend that you use values 0-240 rather than
-        // the usual 0-255, as the last 15 colors will be
-        // 'wrapping around' from the hot end to the cold end,
-        // which looks wrong.
-        // See: https://github.com/FastLED/FastLED/issues/515
-        byte colorIndex = scale8(heat[XY(x, y)], 240);
-
-        edge[y] = ColorFromPalette(currentPalette, colorIndex);
-//        // override color 0 to ensure a black background?
-//        edge[y] = (colorIndex == 0)
-//                  ? CRGB::Black
-//                  : ColorFromPalette(currentPalette, colorIndex);
+        edge[y] = gPaletteManager.colorNoWrap(heat[XY(x, y)]);
       }
     }
 
@@ -132,9 +113,7 @@ public:
       auto& seg = gOctaSegments[i];
       for (int i = 0; i < N_CENTER; ++i) {
         seg[i] = seg[N_PER_SEGMENT-1 - i] =
-            ColorFromPalette(currentPalette,
-//                             heat[XY(0, N_PER_SEGMENT + i)]);
-                             scale8(heat[XY(0, N_PER_SEGMENT + i)], 240));
+            gPaletteManager.colorNoWrap(heat[XY(0, N_PER_SEGMENT + i)]);
 
         // copy to middle led
         if (i == N_CENTER - 1) {
@@ -160,12 +139,6 @@ public:
 
     // intensity global brightness mask
     raw.nscale8(map(intensity, 0,1, 40,255));
-  }
-
-  void nextPalette() {
-//    curPaletteId = (curPaletteId + 1) % gNumPalettes;
-//    targetPalette = gPalettes[curPaletteId];
-    targetPalette = gPalettes[random(0, gNumPalettes)];
   }
 
   void randomize() {
@@ -194,25 +167,10 @@ public:
       return true;
     }
 
-    int targetPaletteId;
-    if (sscanf(line, "p %d", &targetPaletteId) == 1) {
-      Serial << "palette " << targetPaletteId << endl;
-      targetPalette = gPalettes[targetPaletteId];
-      return true;
-    }
-
     if (strcmp(line, "r") == 0) {
       Serial << "randomize" << endl;
       randomize();
       return true;
-    }
-
-
-    // dump palette
-    for (int i = 0; i < 256; ++i) {
-      Serial << i << " ";
-      printRGB(ColorFromPalette(currentPalette, i));
-      Serial << endl;
     }
 
     return false;

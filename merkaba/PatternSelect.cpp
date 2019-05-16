@@ -1,7 +1,6 @@
 #include "./PatternSelect.h"
 
 #include "BasePattern.h"
-#include "Palettes.h"
 #include "./PatternDisplayTest.h"
 #include "./PatternFire.h"
 #include "./PatternLines.h"

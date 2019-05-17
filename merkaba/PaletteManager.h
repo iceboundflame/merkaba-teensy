@@ -44,7 +44,7 @@ public:
       return true;
     }
 
-    if (strcmp(line, "n") == 0) {
+    if (strcmp(line, "n") == 0 || strlen(line) == 0) {
       nextPalette();
       return true;
     }

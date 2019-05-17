@@ -24,12 +24,8 @@ constexpr int N_SEGMENTS_PER_SHAPE = 12;
 constexpr int N_SEGMENTS_TOTAL = 36;
 
 constexpr int VOLTS = 5;
-// divide by 2 since LEDs are double sided
 constexpr int MAX_MILLIAMPS = 8000 / 2;
 constexpr int BATTERY_MILLIWATT_HOURS = (216000 * 0.75);
-
-constexpr float FRAME_RATE = 60;
-
 
 class Display {
 public:
@@ -75,16 +71,30 @@ public:
     FastLED.show();
   }
 
+  void setMaxMilliamps(int maxMilliamps) {
+    maxMilliamps_ = maxMilliamps;
+    // divide by 2 since LEDs are double sided
+    FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, maxMilliamps/2);
+  }
+
+  int getMaxMilliamps() {
+    return maxMilliamps_;
+  }
+
 private:
 
   CRGB leds_[N_ALL];
 
   uint8_t gammaLut[256];
+
+  int maxMilliamps_ = 8000 / 2;
 };
 
+extern Display gDisplay;
 
-//////////
-
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 constexpr int LED_PIN = 13;
 
@@ -105,10 +115,13 @@ public:
 private:
   bool ledState_ = false;
 };
+extern StatusLed gStatusLed;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+constexpr float FRAME_RATE = 60;
 
 class FpsGovernor {
   long start_;
@@ -150,6 +163,7 @@ public:
     return showFps_;
   }
 };
+extern FpsGovernor gFpsGovernor;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -167,11 +181,11 @@ class PowerGovernor {
 
 public:
   void measureFrame(CRGBSet leds) {
-    uint32_t frameMw = min(
-        calculate_unscaled_power_mW(leds, leds.size()),
-        (uint32_t) (VOLTS * MAX_MILLIAMPS));
+    // *2 because we have double-sided LEDs,
+    uint32_t unscaledMw = calculate_unscaled_power_mW(leds, leds.size()) * 2;
 
-    frameMw *= 2;  // we have double-sided LEDs.
+    uint32_t frameMw = min(unscaledMw,
+        (uint32_t) (VOLTS * gDisplay.getMaxMilliamps()));
 
     mwSum += frameMw;
     mwMax = max(mwMax, frameMw);
@@ -214,11 +228,8 @@ public:
     return showPower_;
   }
 };
+extern PowerGovernor gPowerGovernor;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-extern StatusLed gStatusLed;
-extern Display gDisplay;
-extern FpsGovernor gFpsGovernor;
-extern PowerGovernor gPowerGovernor;

@@ -1,9 +1,32 @@
 #include "Display.h"
 
+#include <EEPROM.h>
+
 StatusLed gStatusLed;
 Display gDisplay;
 FpsGovernor gFpsGovernor;
 PowerGovernor gPowerGovernor;
+
+namespace {
+  constexpr int EEPROM_ADDR_BRIGHT_MODE = 0x600;
+
+  void loadAndToggleBrightModeFromEeprom() {
+    bool brightMode = EEPROM.read(EEPROM_ADDR_BRIGHT_MODE);
+    if (brightMode) {
+      gDisplay.setMaxMilliamps(8000);
+      gDisplay.raw().fill_solid(CRGB::White);
+    } else {
+      gDisplay.setMaxMilliamps(4000);
+      gDisplay.raw().fill_solid(CRGB::Orange);
+    }
+    EEPROM.write(EEPROM_ADDR_BRIGHT_MODE, !brightMode);
+
+    gDisplay.show();
+    delay(100);
+    gDisplay.raw().fill_solid(CRGB::Black);
+    gDisplay.show();
+  }
+}
 
 void Display::begin() {
   setGamma(2.2, 255);
@@ -25,8 +48,8 @@ void Display::begin() {
     ctl.setCorrection(TypicalLEDStrip);
   }
 
-  FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, MAX_MILLIAMPS);
-
   raw().fill_solid(CRGB::Black);
-  FastLED.show();
+  show();
+
+  loadAndToggleBrightModeFromEeprom();
 }

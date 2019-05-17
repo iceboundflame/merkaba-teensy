@@ -23,6 +23,8 @@ public:
 //    curPaletteId_ = (curPaletteId + 1) % gNumPalettes;
     curPaletteId_ = random(0, gNumPalettes);
     targetPalette_ = gPalettes[curPaletteId_];
+
+    Serial << "next palette: " << curPaletteId_ << endl;
   }
 
   void loop() {
@@ -35,9 +37,14 @@ public:
   }
 
   bool processSerial(const char *line) {
+    if (sscanf(line, "%d", &curPaletteId_) == 1) {
+      targetPalette_ = gPalettes[curPaletteId_];
+      Serial << "choose palette: " << curPaletteId_ << endl;
+      return true;
+    }
+
     if (strcmp(line, "n") == 0) {
       nextPalette();
-      Serial << "next palette: " << endl;
       return true;
     }
 

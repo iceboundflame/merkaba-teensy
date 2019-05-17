@@ -20,6 +20,12 @@ private:
 public:
   PatternLines(Display* d): BasePattern(d) {
     randomize();
+
+    for (int i = 0; i < N_SEGMENTS_TOTAL; ++i) {
+      for (int j = 0; j < N_PER_SEGMENT; ++j) {
+        vals[i][j] = 0;
+      }
+    }
   }
 
   virtual void loop() {

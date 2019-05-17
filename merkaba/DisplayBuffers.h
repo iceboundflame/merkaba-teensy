@@ -13,8 +13,8 @@
 ///
 // Drawing utils
 
-inline int revIndex(CRGBSet leds, int i, bool rev) {
-  return rev ? leds.size() - 1 - i
+inline int revIndex(int nLeds, int i, bool rev) {
+  return rev ? nLeds - 1 - i
       : i;
 }
 
@@ -63,6 +63,8 @@ public:
   int segmentIdx;
   bool reverse;
 
+  // to match structure diagram, segmentNum is 1-based.
+  // but segmentIdx is 0-based.
   Segment(int segmentNum_, bool reverse_)
       : segmentIdx(segmentNum_-1), reverse(reverse_) {
   }
@@ -73,6 +75,10 @@ public:
 
   CRGB& operator[](int led) {
     return rev(raw(), led, reverse);
+  }
+
+  int ledToRawFullBufIndex(int led) {
+    return segmentIdx * N_PER_SEGMENT + revIndex(N_PER_SEGMENT, led, reverse);
   }
 
   void copyFrom(CRGBSet& set) {

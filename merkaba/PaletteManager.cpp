@@ -113,7 +113,7 @@ CRGBPalette16 gPalettes[] = {
     bhw1_03_gp,
     es_emerald_dragon_11_gp,
 
-    bhw1_bluesteel_gp,
+//    bhw1_bluesteel_gp,  // weird cause it ends in black
     bhw1_w00t_gp,
     es_platinum_11_gp,
 

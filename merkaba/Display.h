@@ -36,16 +36,27 @@ constexpr int VOLTS = 5;
 constexpr int MAX_MILLIAMPS = 10000 / 2;
 constexpr int BATTERY_MILLIWATT_HOURS = (216000 * 0.75);
 
+constexpr float FRAME_RATE = 60;
 
 
 class Display {
 public:
   void begin();
 
-  /**
-   * Each face has two vertical legs, then the base leg.
-   * Pixel order starts from bottom of right leg, CCW.
-   */
+  // maxValue0 is the largest input value that is allowed to be rendered as 0
+  // (full off).
+  void setGamma(float gamma, int maxValue0) {
+    for (int i = 0; i < 256; ++i) {
+      gammaLut[i] = round(pow((float)i / 255, gamma) * 255);
+
+      if (i > maxValue0 && gammaLut[i] == 0) {
+        gammaLut[i] = 1;
+      }
+
+      Serial << i << " " << gammaLut[i] << "    vs " << scale8(i, i) << endl;
+    }
+  }
+
   CRGBSet getStrand(int i) {
     return CRGBSet(leds_ + i * N_PER_STRAND, N_PER_STRAND);
   }
@@ -55,21 +66,17 @@ public:
     return CRGBSet(leds_ + i * N_PER_SEGMENT, N_PER_SEGMENT);
   }
 
-//  CRGBSet getTetrahedral(int i) {
-//
-//    return getSegment()
-//  }
-
-//  CRGBSet getOctahedral(int i) {
-//    return getSegment(gOctaSegments[i].segmentIdx);
-//  }
-
   CRGBSet raw() { return CRGBSet(leds_, N_ALL); }
 
   void show() {
-    // hacky gamma correction
+    // gamma correction
     for (auto& rgb : raw()) {
-      rgb.nscale8(rgb);
+//      rgb.nscale8(rgb);
+//      rgb.nscale8_video(rgb);
+
+      rgb.r = gammaLut[rgb.r];
+      rgb.g = gammaLut[rgb.g];
+      rgb.b = gammaLut[rgb.b];
     }
 //    raw().napplyGamma_video(2.2);
 
@@ -79,6 +86,8 @@ public:
 private:
 
   CRGB leds_[N_ALL];
+
+  uint8_t gammaLut[256];
 };
 
 
@@ -121,7 +130,7 @@ public:
     start_ = micros();
   }
   void endFrame() {
-    constexpr long kDesiredLoopMicros = 1000000 / 60;
+    constexpr long kDesiredLoopMicros = 1000000 / FRAME_RATE;
     const int kPrintEvery = 50;
 
     long elapsed = micros() - start_;

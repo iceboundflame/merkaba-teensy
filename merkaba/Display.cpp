@@ -6,6 +6,8 @@ FpsGovernor gFpsGovernor;
 PowerGovernor gPowerGovernor;
 
 void Display::begin() {
+  setGamma(2.2, 255);
+
   // WS2812SERIAL?
   {
     auto &ctl = FastLED.addLeds<WS2812SERIAL, DATA_STRAND0, BRG>(
@@ -24,4 +26,7 @@ void Display::begin() {
   }
 
   FastLED.setMaxPowerInVoltsAndMilliamps(VOLTS, MAX_MILLIAMPS);
+
+  raw().fill_solid(CRGB::Black);
+  FastLED.show();
 }

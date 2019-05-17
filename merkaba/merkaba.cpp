@@ -259,6 +259,29 @@ namespace {
       }
     }
 
+    {
+      float gamma;
+      int maxValue0;
+      if (sscanf(line, "gamma %f %d", &gamma, &maxValue0) == 2) {
+        gDisplay.setGamma(gamma, maxValue0);
+        return true;
+      }
+    }
+
+    {
+      int gain;
+      if (sscanf(line, "gain %d", &gain) == 1) {
+        set_mic_gain(gain);
+        return true;
+      }
+
+      int ar;
+      if (sscanf(line, "ar %d", &ar) == 1) {
+        set_mic_ar(ar);
+        return true;
+      }
+    }
+
     if (strcmp(line, "fps") == 0) {
       gFpsGovernor.setShowFps(!gFpsGovernor.isShowFps());
       return true;

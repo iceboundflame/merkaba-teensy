@@ -45,6 +45,9 @@ public:
   int sparkle = 30;
   int sparkleFade = 20;
 
+  int globalMin = 120;
+  int globalMax = 255;
+
   PatternFire(Display* d): BasePattern(d) {
     w_ = 1;
     h_ = miniTetraBuf.data().size() + N_CENTER;
@@ -64,8 +67,10 @@ public:
 
   virtual void loop() {
     EVERY_N_SECONDS(5) {
-      gPaletteManager.nextPalette();
-      randomize();
+      if (gAutoAdvance) {
+        gPaletteManager.nextPalette();
+        randomize();
+      }
     };
 
     gFftAnalyzer.step();
@@ -138,7 +143,7 @@ public:
     }
 
     // intensity global brightness mask
-    raw.nscale8(map(intensity, 0,1, 40,255));
+    raw.nscale8(map(intensity, 0,1, globalMin,globalMax));
   }
 
   void randomize() {
@@ -166,6 +171,9 @@ public:
       Serial << "mask sparkleFade " << sparkleFade << endl;
       return true;
     }
+
+    if (sscanf(line, "gmin %d", &globalMin) == 1) { Serial.println("ok"); return true; }
+    if (sscanf(line, "gmax %d", &globalMax) == 1) { Serial.println("ok"); return true; }
 
     if (strcmp(line, "r") == 0) {
       Serial << "randomize" << endl;

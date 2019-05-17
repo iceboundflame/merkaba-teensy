@@ -30,8 +30,10 @@ public:
 
   virtual void loop() {
     EVERY_N_SECONDS(5) {
-      gPaletteManager.nextPalette();
-      randomize();
+      if (gAutoAdvance) {
+        gPaletteManager.nextPalette();
+        randomize();
+      }
     };
 
     gFftAnalyzer.step();

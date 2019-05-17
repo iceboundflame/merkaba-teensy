@@ -2,9 +2,11 @@
 
 #include <memory>
 
+#include <Arduino.h>
 #include <EEPROM.h>
 
 #include "./BasePattern.h"
+#include "util.h"
 
 class Display;
 
@@ -35,6 +37,10 @@ public:
   void loadFromEepromAndAdvance() {
     selectPattern(EEPROM.read(EEPROM_PATTERN_ADDR) + 1);
     EEPROM.write(EEPROM_PATTERN_ADDR, currentPatternIndex_);
+  }
+
+  void randomPattern() {
+    selectPattern(randomExcluding(0, kPattern_N, currentPatternIndex_));
   }
 
   void selectPattern(int i);

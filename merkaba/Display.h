@@ -7,15 +7,7 @@
 #include <FastLED.h>
 
 #include "Streaming.h"
-
-
-// utils
-
-inline void printRGB(const CRGB& rgb) {
-  Serial << _HEX(rgb.r) << ":"
-         << _HEX(rgb.g) << ":"
-         << _HEX(rgb.b);
-}
+#include "util.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -170,6 +162,9 @@ class PowerGovernor {
   float mwSum = 0;
   float mwMax = 0;
 
+  float mwSumPowerOn = 0;
+  int samplesSincePowerOn = 0;
+
 public:
   void measureFrame(CRGBSet leds) {
     uint32_t frameMw = min(
@@ -194,6 +189,15 @@ public:
       Serial << "   Peak power usage: "
              << mwMax / VOLTS /1000 << " A; "
              << mwMax /1000 << " W"
+             << "\n";
+
+      mwSumPowerOn += mwAvg;
+      samplesSincePowerOn++;
+      float mwAvgPowerOn = mwSumPowerOn / samplesSincePowerOn;
+      Serial << "     Since power on: "
+             << mwAvgPowerOn / VOLTS /1000 << " A; "
+             << mwAvgPowerOn /1000 << " W; "
+             << (BATTERY_MILLIWATT_HOURS / mwAvgPowerOn) << " h runtime"
              << "\n";
 
       mwSum = 0;

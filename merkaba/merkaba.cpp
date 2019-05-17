@@ -36,6 +36,7 @@ namespace {
 // Main
 
 PatternSelect gPatternSelect(&gDisplay);
+bool gAutoAdvance = true;
 
 void setup() {
   Serial.begin(115200);
@@ -69,6 +70,12 @@ void loop() {
     handleSerial();
 
 //    handleBrightControl();
+
+    EVERY_N_SECONDS(30) {
+      if (gAutoAdvance) {
+        gPatternSelect.randomPattern();
+      }
+    }
 
     gPaletteManager.loop();
     gPatternSelect.currentPattern().loop();
@@ -271,14 +278,22 @@ namespace {
     {
       int gain;
       if (sscanf(line, "gain %d", &gain) == 1) {
-        set_mic_gain(gain);
+        set_mic_gain((Gain) gain);
         return true;
       }
 
       int ar;
       if (sscanf(line, "ar %d", &ar) == 1) {
-        set_mic_ar(ar);
+        set_mic_ar((AttackRelease) ar);
         return true;
+      }
+    }
+
+    {
+      int v;
+      if (sscanf(line, "auto %d", &v) == 1) {
+        gAutoAdvance = (v != 0);
+        Serial.println("ok"); return true;
       }
     }
 

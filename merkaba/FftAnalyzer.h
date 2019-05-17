@@ -94,7 +94,7 @@ private:
     float averageDbAlpha_ = 0.998;
     float scaledFullScaleDb_ = 6;
 
-    float scaledBias_ = 0.3;
+    float scaledBias_ = 0.5;
     float bassPeakAlpha_ = 0.7;
     float scaledPeakAlpha_ = 0.9;
 

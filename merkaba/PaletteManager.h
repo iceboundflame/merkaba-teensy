@@ -3,6 +3,7 @@
 #include <FastLED.h>
 #include "Streaming.h"
 #include "Display.h"
+#include "util.h"
 
 extern CRGBPalette16 gPalettes[];
 extern int gNumPalettes;
@@ -21,7 +22,7 @@ public:
 
   void nextPalette() {
 //    curPaletteId_ = (curPaletteId + 1) % gNumPalettes;
-    curPaletteId_ = random(0, gNumPalettes);
+    curPaletteId_ = randomExcluding(0, gNumPalettes, curPaletteId_);
     targetPalette_ = gPalettes[curPaletteId_];
 
     Serial << "next palette: " << curPaletteId_ << endl;

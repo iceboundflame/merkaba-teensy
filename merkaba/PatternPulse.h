@@ -9,65 +9,63 @@
 
 #include "AudioHardware.h"
 
-namespace {
-  class Pulse {
-    std::vector<Segment>* path_;
-    float velocity_;  // in segments/sec
-    float position_;  // in segments; continuous val from [ 0, path->size() )
-    float size_ = 1;  // in leds
+class Pulse {
+  std::vector<Segment>* path_;
+  float velocity_;  // in segments/sec
+  float position_;  // in segments; continuous val from [ 0, path->size() )
+  float size_ = 1;  // in leds
 
-  public:
-    Pulse( std::vector<Segment>* path, float velocity, float position )
-    : path_(path), velocity_(velocity), position_(position) {
-    }
+public:
+  Pulse( std::vector<Segment>* path, float velocity, float position )
+  : path_(path), velocity_(velocity), position_(position) {
+  }
 
-    void step() {
-      // XXX: is this accurate or should we measure time?
-      position_ += velocity_ / FRAME_RATE;
-      position_ = normalizePosition(position_);
-    }
+  void step() {
+    // XXX: is this accurate or should we measure time?
+    position_ += velocity_ / FRAME_RATE;
+    position_ = normalizePosition(position_);
+  }
 
-    void render(uint8_t* fullValBuf) {
+  void render(uint8_t* fullValBuf) {
 //      int from = (velocity_ > 0)  ? 0      : -size_;
 //      int to   = (velocity_ > 0)  ? size_  : 0;
-      int from = (velocity_ < 0)  ? 0      : -size_;
-      int to   = (velocity_ < 0)  ? size_  : 0;
-      for (int i = from; i < to; i++) {
+    int from = (velocity_ < 0)  ? 0      : -size_;
+    int to   = (velocity_ < 0)  ? size_  : 0;
+    for (int i = from; i < to; i++) {
 //        for (int i = -size_/2; i < size_/2; i++) {
-        int fullIdx = posToRawFullBufIndex(position_ + (float)i / N_PER_SEGMENT);
-        fullValBuf[fullIdx] = 255;
-      };
+      int fullIdx = posToRawFullBufIndex(position_ + (float)i / N_PER_SEGMENT);
+      fullValBuf[fullIdx] = 255;
+    };
+  }
+
+  void setSize(float size, bool advance=false) {
+    size_ = size;
+  }
+
+  // put pos into [ 0, path->size() ) through modulo
+  float normalizePosition(float pos) {
+    pos = fmod(pos, path_->size());
+    if (pos < 0) {
+      pos += path_->size();
     }
+    return pos;
+  }
 
-    void setSize(float size, bool advance=false) {
-      size_ = size;
-    }
+  // pos in [ 0, path->size() )
+  int posToRawFullBufIndex(float pos) {
+    pos = normalizePosition(pos);
+    int segmentIdx = constrain((int) pos, 0, N_SEGMENTS_TOTAL-1);
+    float fracPos = pos - segmentIdx;
+    int fracPosLed = constrain(fracPos * N_PER_SEGMENT, 0, N_PER_SEGMENT-1);
 
-    // put pos into [ 0, path->size() ) through modulo
-    float normalizePosition(float pos) {
-      pos = fmod(pos, path_->size());
-      if (pos < 0) {
-        pos += path_->size();
-      }
-      return pos;
-    }
+    int fullIdx = (*path_)[segmentIdx].ledToRawFullBufIndex(fracPosLed);
 
-    // pos in [ 0, path->size() )
-    int posToRawFullBufIndex(float pos) {
-      pos = normalizePosition(pos);
-      int segmentIdx = constrain((int) pos, 0, N_SEGMENTS_TOTAL-1);
-      float fracPos = pos - segmentIdx;
-      int fracPosLed = constrain(fracPos * N_PER_SEGMENT, 0, N_PER_SEGMENT-1);
+    // being extra defensive.. hoping to fix an unknown crash
+    fullIdx = constrain(fullIdx, 0, N_ALL-1);
 
-      int fullIdx = (*path_)[segmentIdx].ledToRawFullBufIndex(fracPosLed);
-
-      // being extra defensive.. hoping to fix an unknown crash
-      fullIdx = constrain(fullIdx, 0, N_ALL-1);
-
-      return fullIdx;
-    }
-  };
-}
+    return fullIdx;
+  }
+};
 
 class PatternPulse : public BasePattern {
 private:
@@ -115,8 +113,10 @@ public:
     }
 
     EVERY_N_SECONDS(5) {
-      gPaletteManager.nextPalette();
-      randomize();
+      if (gAutoAdvance) {
+        gPaletteManager.nextPalette();
+        randomize();
+      }
     };
 
     gFftAnalyzer.step();
@@ -249,8 +249,5 @@ public:
 };
 
 // todo: kaleidoscope effects?
-// todo: auto-advance and randomize effects.
-// todo: see if gain control is needed.
-
 // FIXME: Some kind of crash somewhere sometimes in PatternPulse??
 

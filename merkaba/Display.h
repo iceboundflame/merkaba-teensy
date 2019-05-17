@@ -25,7 +25,7 @@ constexpr int N_SEGMENTS_TOTAL = 36;
 
 constexpr int VOLTS = 5;
 // divide by 2 since LEDs are double sided
-constexpr int MAX_MILLIAMPS = 10000 / 2;
+constexpr int MAX_MILLIAMPS = 8000 / 2;
 constexpr int BATTERY_MILLIWATT_HOURS = (216000 * 0.75);
 
 constexpr float FRAME_RATE = 60;
@@ -203,6 +203,8 @@ public:
       mwSum = 0;
       mwMax = 0;
     }
+
+//    Serial << frameMw << endl;
   }
 
   void setShowPower(bool showPower) {

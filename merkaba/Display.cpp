@@ -11,20 +11,22 @@ namespace {
   constexpr int EEPROM_ADDR_BRIGHT_MODE = 0x600;
 
   void loadAndToggleBrightModeFromEeprom() {
-    bool brightMode = EEPROM.read(EEPROM_ADDR_BRIGHT_MODE);
-    if (brightMode) {
-      gDisplay.setMaxMilliamps(8000);
-      gDisplay.raw().fill_solid(CRGB::White);
-    } else {
-      gDisplay.setMaxMilliamps(4000);
-      gDisplay.raw().fill_solid(CRGB::Orange);
-    }
-    EEPROM.write(EEPROM_ADDR_BRIGHT_MODE, !brightMode);
+    gDisplay.setMaxMilliamps(10000);
 
-    gDisplay.show();
-    delay(100);
-    gDisplay.raw().fill_solid(CRGB::Black);
-    gDisplay.show();
+//    bool brightMode = EEPROM.read(EEPROM_ADDR_BRIGHT_MODE);
+//    if (brightMode) {
+//      gDisplay.setMaxMilliamps(8000);
+//      gDisplay.raw().fill_solid(CRGB::White);
+//    } else {
+//      gDisplay.setMaxMilliamps(4000);
+//      gDisplay.raw().fill_solid(CRGB::Orange);
+//    }
+//    EEPROM.write(EEPROM_ADDR_BRIGHT_MODE, !brightMode);
+//
+//    gDisplay.show();
+//    delay(100);
+//    gDisplay.raw().fill_solid(CRGB::Black);
+//    gDisplay.show();
   }
 }
 

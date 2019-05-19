@@ -13,6 +13,7 @@
 
 
 #include <Arduino.h>
+#include <Adafruit_SleepyDog.h>
 #include <memory>
 
 #include "Display.h"
@@ -26,8 +27,7 @@
 namespace {
   void handleSerial();
   bool handleSerialLine(const char *line);
-
-//  void handleBrightControl();
+  void seedRngWithAudio();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,7 +40,14 @@ bool gAutoAdvance = true;
 
 void setup() {
   Serial.begin(115200);
+  delay(100);
   Serial << "Merkaba starting; Compiled " __DATE__ "  " __TIME__ << endl;
+
+  audio_hardware_begin();
+  seedRngWithAudio();
+
+  int countdownMS = Watchdog.enable(1000);
+  Serial << "Watchdog: " << countdownMS << "ms" << endl;
 
 //  delay(1000);
 //  int x = analogRead(A1);
@@ -48,6 +55,7 @@ void setup() {
 //  randomSeed(x);
 //  delay(1000);
 
+  gPaletteManager.begin();
 //  gPatternSelect.loadFromEepromAndAdvance();
   gPatternSelect.selectPattern(0);
   Serial << "Starting with pattern: "
@@ -56,7 +64,6 @@ void setup() {
   gStatusLed.begin();
   gDisplay.begin();
 
-  audio_hardware_begin();
   gFftAnalyzer.begin();
 //  gBeatDetector.begin();
 
@@ -65,11 +72,11 @@ void setup() {
 }
 
 void loop() {
+  Watchdog.reset();
+
   gFpsGovernor.startFrame();
   {
     handleSerial();
-
-//    handleBrightControl();
 
     EVERY_N_SECONDS(30) {
       if (gAutoAdvance) {
@@ -199,6 +206,16 @@ namespace {
       }
     }
 
+    {
+      int v;
+      if (sscanf(line, "sleep %d", &v) == 1) {
+        Serial.println("ok...");
+        delay(v);
+        Serial.println("ok");
+        return true;
+      }
+    }
+
     if (strcmp(line, "fps") == 0) {
       gFpsGovernor.setShowFps(!gFpsGovernor.isShowFps());
       return true;
@@ -207,9 +224,25 @@ namespace {
     // fallback: send to current pattern
     return gPatternSelect.currentPattern().processSerial(line);
   }
+
+
+  AudioRecordQueue recordQueue;
+  AudioConnection patch(gAudioInput, recordQueue);
+  void seedRngWithAudio() {
+    // read a few samples from audio input for random seed
+    recordQueue.begin();
+    while (!recordQueue.available()) {
+      delay(1);
+    }
+    int16_t* buf = recordQueue.readBuffer();
+
+    int seed = (buf[0] << 16) | buf[1];
+
+    Serial << "Seed: " << _HEX(seed) << endl;
+    recordQueue.clear();
+    recordQueue.end();
+  }
 }
-
-
 
 
 // misc utils

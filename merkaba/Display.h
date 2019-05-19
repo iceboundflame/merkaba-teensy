@@ -34,6 +34,7 @@ public:
   // maxValue0 is the largest input value that is allowed to be rendered as 0
   // (full off).
   void setGamma(float gamma, int maxValue0) {
+    Serial << "Gamma table:" << endl;
     for (int i = 0; i < 256; ++i) {
       gammaLut[i] = round(pow((float)i / 255, gamma) * 255);
 
@@ -41,7 +42,8 @@ public:
         gammaLut[i] = 1;
       }
 
-      Serial << i << " " << gammaLut[i] << "    vs " << scale8(i, i) << endl;
+      Serial << "  " << i << " " << gammaLut[i]
+          << "    vs " << scale8(i, i) << endl;
     }
   }
 

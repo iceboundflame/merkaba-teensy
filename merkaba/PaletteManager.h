@@ -17,6 +17,10 @@ class PaletteManager {
 
 public:
   PaletteManager() {
+    begin();
+  }
+
+  void begin() {
     currentPalette_ = targetPalette_ = gPalettes[random(0, gNumPalettes)];
   }
 
